@@ -105,8 +105,8 @@ exports.createClient = function(port, host, options) {
       }
 
       // lint
-      else if (typeof arg !== 'string' && typeof arg !== 'number') {
-        var err = new Error("fakeredis/lint: Argument #" + i + " for " + command + " is not a String, Buffer or Number: " + arg);
+      else if (typeof arg !== 'string' && typeof arg !== 'number' && typeof arg !== 'boolean') {
+        var err = new Error("fakeredis/lint: Argument #" + i + " for " + command + " is not a String, Buffer, Number, nor Boolean: " + arg);
         if (callback)
           return callback(err);
         else
