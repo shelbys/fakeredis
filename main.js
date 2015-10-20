@@ -31,7 +31,7 @@ exports.createClient = function(port, host, options) {
   var id = !port && !host ? 'fake_' + (++anon) : (host || "") + (port || "")
     , lat = options && options.fast || exports.fast ? 1 : null
     , c = new Connection(backends[id] || (backends[id] = new Backend), lat, lat)
-    , cl = new RedisClient({ on: function() {} }/* , options */)
+    , cl = new RedisClient({ on: function() {}, once: function() {} }/* , options */)
 
     , returnBuffers = options && options.return_buffers
     , detectBuffers = options && options.detect_buffers;
