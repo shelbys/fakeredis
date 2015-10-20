@@ -1,6 +1,18 @@
 Changelog
 =========
 
+## v0.3.3 - September 21, 2015
+
+* ZINTERSTORE and ZUNIONSTORE now work with sets.
+
+## v0.3.2 - August 19, 2015
+
+* BITCOUNT
+
+## v0.3.1 - March 24, 2015
+
+* Bugfix: Correctly escape special characters in pattern matcher
+
 ## v0.3.0 - December 20, 2014
 
 * SCAN, SSCAN, HSCAN, ZSCAN

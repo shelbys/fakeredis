@@ -89,6 +89,14 @@ process.stdout.write('testing fakeredis ...\n\n');
 
     redis.SET("flop", "dont!", "XX", test("SET with XX fail", null, null));
 
+    redis.BITCOUNT(test("BITCOUNT missing key parameter", BAD_ARGS, null));
+    redis.BITCOUNT("absentKey", test("BITCOUNT absent key", null, 0));
+    redis.SET("bitCountKey", "foobar");
+    redis.BITCOUNT("bitCountKey", test("BITCOUNT of valid key", null, 26));
+    redis.BITCOUNT("bitCountKey", 0, -1, test("BITCOUNT using explicit range", null, 26));
+    redis.BITCOUNT("bitCountKey", 0, 0, test("BITCOUNT of first character", null, 4));
+    redis.BITCOUNT("bitCountKey", -1, -1, test("BITCOUNT of last character", null, 4));
+    redis.BITCOUNT("bitCountKey", 0, 3, test("BITCOUNT of substring", null, 19));
 
     // Sets.
 
@@ -234,6 +242,16 @@ process.stdout.write('testing fakeredis ...\n\n');
     redis.ZINTERSTORE("nothing", 2, "lexi", "otherzset", test("ZINTERSTORE empty out", null, 0));
     redis.TYPE("nothing", test("ZINTERSTORE empty out / TYPE", null, "none"));
 
+    redis.SADD("newset", "v1", "v2");
+    redis.ZADD("newzset", 1, "v1", 2, "v2", 3, "v3");
+    redis.ZINTERSTORE("out", 2, "newzset", "newset");
+    redis.ZRANGE("out", 0, -1, test("ZINTERSTORE with sets", null, ["v1", "v2"]));
+    // switch set and zset key order
+    redis.ZINTERSTORE("out2", 2, "newset", "newzset");
+    redis.ZRANGE("out2", 0, -1, test("ZINTERSTORE with sets", null, ["v1", "v2"]));
+    redis.ZREVRANGE("out2", 0, -1, "withscores", test("ZINTERSTORE with sets withscores", null, ["v2", "3", "v1", "2"]));
+    redis.ZUNIONSTORE("out3", 2, "newset", "newzset");
+    redis.ZRANGE("out3", 0, -1, "withscores", test("ZUNIONSTORE with sets withscores", null, ["v1", "2", "v2", "3", "v3", "3"]));
 
     // Hashes.
 
@@ -457,7 +475,7 @@ process.stdout.write('testing fakeredis ...\n\n');
         sub3 = fake.createClient("pubsub-1"),
 
         data = [ 0, [], [], [] ],
-        tcb1 = test("PUBSUB basics", null, [ 4, [ 'mych-alpha', 'mych-beta', 'mych-omega' ], [ 'mych-alpha', 'mych-beta' ], [ 'mych-alpha', 'mych-beta', 'what-what', 'mych-omega' ] ]),
+        tcb1 = test("PUBSUB basics", null, [ 4, [ 'my.ch-alpha', 'my.ch-beta', 'my.ch-omega' ], [ 'my.ch-alpha', 'my.ch-beta' ], [ 'my.ch-alpha', 'my.ch-beta', 'what-what', 'my.ch-omega' ] ]),
 
         ord  = [],
         tcb2 = test("PUBSUB normal / sequence", null, [ 1, '*ch', 'pun', 1 ]),
@@ -469,9 +487,9 @@ process.stdout.write('testing fakeredis ...\n\n');
         ord.push(data);
     });
 
-    sub1.SUBSCRIBE("mych");
+    sub1.SUBSCRIBE("my.ch");
     sub2.PSUBSCRIBE("*ch");
-    sub3.PSUBSCRIBE("my*", "what");
+    sub3.PSUBSCRIBE("my.*", "what");
 
     try {
         sub3.PUBLISH('fail', 'fail');
@@ -485,7 +503,7 @@ process.stdout.write('testing fakeredis ...\n\n');
         data[1].push(channel + '-' + message);
 
         if (message === 'alpha')
-            pub.PUBLISH('mych', 'beta', test('PUB2', null, 3));
+            pub.PUBLISH('my.ch', 'beta', test('PUB2', null, 3));
     });
 
     sub2.on('pmessage', function (pattern, channel, message) {
@@ -508,7 +526,7 @@ process.stdout.write('testing fakeredis ...\n\n');
         });
 
         sub2.PUBLISH('hello', 'world', test('PUB4 ignored', null, 0));
-        sub2.PUBLISH('mych', 'omega', test('PUB5 unsubed', null, 2));
+        sub2.PUBLISH('my.ch', 'omega', test('PUB5 unsubed', null, 2));
     });
 
     sub3.on('pmessage', function (pattern, channel, message) {
@@ -518,7 +536,7 @@ process.stdout.write('testing fakeredis ...\n\n');
     var start = function (ch) {
         data [ 0 ] ++;
         if (data [ 0 ] === 4) {
-            pub.PUBLISH('mych', 'alpha', test('PUB1', null, 3));
+            pub.PUBLISH('my.ch', 'alpha', test('PUB1', null, 3));
         }
 
         if (ch === '*ch')
@@ -976,7 +994,7 @@ function countTests() {
 }
 
 var NUM_TESTS = countTests();
-if (NUM_TESTS !== 272)
+if (NUM_TESTS !== 283)
     throw new Error("Test count is off: " + NUM_TESTS);
 
 process.on('exit', function () {
@@ -993,4 +1011,3 @@ process.on('exit', function () {
         process.exit(1);
     }
 });
-
